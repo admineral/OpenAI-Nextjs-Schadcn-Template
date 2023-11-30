@@ -31,7 +31,10 @@ const openai = new OpenAI({
 export async function POST(req: NextRequest) {
     if (req.method === 'POST') {
         try {
-            const { assistantName, assistantModel, assistantDescription, fileIds, tools: toolNames, metadata } = await req.json() as RequestBody;
+            const requestBody = await req.json() as RequestBody;
+            console.log('Received request:', requestBody);
+
+            const { assistantName, assistantModel, assistantDescription, fileIds, tools: toolNames, metadata } = requestBody;
 
             // Create the tools array with specific types for each tool
             const tools: (AssistantCreateParams.AssistantToolsCode | AssistantCreateParams.AssistantToolsRetrieval | AssistantCreateParams.AssistantToolsFunction)[] = toolNames?.map(toolName => {
