@@ -1,6 +1,10 @@
 "use client"
 
 import React, { useState } from 'react';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button, Input, Checkbox, Card, Form,FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@shadcn/ui';
 
 interface AssistantDetails {
   assistantName: string;
@@ -15,6 +19,15 @@ interface Response {
   assistantId: string;
 }
 
+const formSchema = z.object({
+  assistantName: z.string(),
+  assistantModel: z.string(),
+  assistantDescription: z.string(),
+  fileIds: z.array(z.string()),
+  tools: z.array(z.string()),
+  file: z.any(), // Add this line
+});
+
 export default function CreateAssistantPage() {
   const [assistantDetails, setAssistantDetails] = useState<AssistantDetails>({
     assistantName: 'My Assistant',
@@ -24,6 +37,11 @@ export default function CreateAssistantPage() {
     tools: [],
   });
   const [response, setResponse] = useState<Response | null>(null);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: assistantDetails,
+  });
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -45,6 +63,9 @@ export default function CreateAssistantPage() {
             fileIds: [...prevDetails.fileIds, uploadData.fileId],
             tools: prevDetails.fileIds.length === 0 ? ['retrieval', ...prevDetails.tools] : prevDetails.tools,
           }));
+  
+          // Update the form value
+          form.setValue('file', uploadData.fileId);
         }
       }
     }
@@ -59,13 +80,13 @@ export default function CreateAssistantPage() {
     }));
   };
 
-  const createAssistant = async () => {
+  const createAssistant = async (values: z.infer<typeof formSchema>) => {
     const res = await fetch('/api/createAssistant', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(assistantDetails),
+      body: JSON.stringify(values),
     });
     const data = await res.json();
     setResponse(data);
@@ -73,45 +94,97 @@ export default function CreateAssistantPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
-      <div className="p-5 bg-white rounded shadow-xl w-80">
+      <Card className="p-5 w-80">
         <h1 className="text-2xl font-bold mb-4">Create Assistant</h1>
+  
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(createAssistant)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="file"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>File Upload</FormLabel>
+                  <FormControl>
+                    <Input type="file" {...field} multiple onChange={handleFileChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+  
+            <FormField
+              control={form.control}
+              name="tools"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tools Selection</FormLabel>
+                  <FormControl>
+                    <Checkbox
+                      checked={assistantDetails.tools.includes('retrieval')}
+                      onChange={() => handleToolChange('retrieval')}
+                      disabled={assistantDetails.fileIds.length > 0}
+                    > Retrieval</Checkbox>
+                    <Checkbox
+                      checked={assistantDetails.tools.includes('code_interpreter')}
+                      onChange={() => handleToolChange('code_interpreter')}
+                    > Code Interpreter</Checkbox>
+                    <Checkbox
+                      checked={assistantDetails.tools.includes('function')}
+                      onChange={() => handleToolChange('function')}
+                    > Function</Checkbox>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+  <FormField
+  control={form.control}
+  name="assistantName"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Assistant Name</FormLabel>
+      <FormControl>
+        <Input {...field} />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
 
-        {/* File Upload */}
-        <input type="file" onChange={handleFileChange} multiple />
+<FormField
+  control={form.control}
+  name="assistantModel"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Assistant Model</FormLabel>
+      <FormControl>
+        <Input {...field} />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
 
-        {/* Tools Selection */}
-        <div>
-          <label>
-            <input
-              type="checkbox"
-              checked={assistantDetails.tools.includes('retrieval')}
-              onChange={() => handleToolChange('retrieval')}
-              disabled={assistantDetails.fileIds.length > 0}
-            /> Retrieval
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={assistantDetails.tools.includes('code_interpreter')}
-              onChange={() => handleToolChange('code_interpreter')}
-            /> Code Interpreter
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={assistantDetails.tools.includes('function')}
-              onChange={() => handleToolChange('function')}
-            /> Function
-          </label>
-        </div>
-
-        <p><strong>Name:</strong> {assistantDetails.assistantName}</p>
-        <p><strong>Model:</strong> {assistantDetails.assistantModel}</p>
-        <p><strong>Description:</strong> {assistantDetails.assistantDescription}</p>
-
-        {/* Button to create the assistant */}
-        <button onClick={createAssistant} className="mt-4">Create Assistant</button>
-
+<FormField
+  control={form.control}
+  name="assistantDescription"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Assistant Description</FormLabel>
+      <FormControl>
+        <Input {...field} />
+      </FormControl>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+            {/* Add other FormFields here */}
+  
+            <Button type="submit">Create Assistant</Button>
+          </form>
+        </Form>
+  
         {response && (
           <div className="mt-4">
             <h2 className="text-xl font-bold mb-2">Response</h2>
@@ -119,8 +192,7 @@ export default function CreateAssistantPage() {
             <p><strong>Assistant ID:</strong> {response.assistantId}</p>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
-
