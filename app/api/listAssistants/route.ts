@@ -6,7 +6,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 // app/api/listAssistants/route.ts
-
 export async function POST(req: NextRequest) {
     try {
       // Extract JSON data from the request
@@ -31,7 +30,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(assistants);
     } catch (error) {
       // Log any errors that occur during the process
-      console.error(`Error occurred while listing assistants: ${error}`);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error instanceof Error) {
+        console.error(`Error occurred while listing assistants: ${error}`);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+      } else {
+        console.error(`An unknown error occurred while listing assistants.`);
+        return NextResponse.json({ error: 'An unknown error occurred.' }, { status: 500 });
+      }
     }
   }

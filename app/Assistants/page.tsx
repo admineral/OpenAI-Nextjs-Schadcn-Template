@@ -44,6 +44,8 @@ export default function Page() {
   useEffect(() => {
     handleListAssistants();
   }, []);
+
+  
   const handleRetrieveAssistantDetails = async () => {
     if (assistantId) {
       try {

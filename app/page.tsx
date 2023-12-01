@@ -10,6 +10,19 @@ import UploadFiles_Configure from './UploadFiles_Configure';
 
 import Link from 'next/link';
 
+interface FileData {
+  name: string;
+  fileId?: string;
+  status?: 'uploading' | 'uploaded' | 'failed';
+}
+interface UploadFilesProps {
+  files: FileData[];
+  setFiles: React.Dispatch<React.SetStateAction<FileData[]>>;
+  onFileIdUpdate: (fileId: string) => void; // Add this line
+}
+
+
+
 
 
 interface AssistantDetails {
@@ -75,11 +88,8 @@ export default function CreateAssistantPage() {
   });
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-
     if (event.target.files && event.target.files.length > 0) {
-
       setIsUploading(true);
-
       const filesArray = Array.from(event.target.files); 
   
       for (const file of filesArray) {
@@ -92,8 +102,9 @@ export default function CreateAssistantPage() {
         });
   
         const uploadData = await uploadRes.json();
-
-        if (uploadData.success) {
+  
+        // Check if the file ID is valid before adding it to the array
+        if (uploadData.fileId) {
           setAssistantDetails(prevDetails => {
             const newDetails = {
               ...prevDetails,
@@ -139,6 +150,16 @@ export default function CreateAssistantPage() {
     setResponse(data);
   };
 
+  const handleFileIdUpdate = (fileId: string) => {
+    setAssistantDetails(prevDetails => {
+      const newDetails = {
+        ...prevDetails,
+        fileIds: [...prevDetails.fileIds, fileId],
+      };
+      return newDetails;
+    });
+  };
+
 
   //Return the page
   return (
@@ -149,7 +170,7 @@ export default function CreateAssistantPage() {
               Go to Assistants
             </button>
           </Link>
-      <Card className="p-5 w-600">
+      <Card className="p-5 w-1/2">
         <h1 className="text-2xl font-bold mb-4">Create Assistant</h1>
   
         <Form {...form}>
@@ -204,56 +225,36 @@ export default function CreateAssistantPage() {
             )}
           />
 
-
-            <Controller
-              control={form.control}
-              name="file"
-              render={({ field: { onChange, ref } }) => (
-                <div className="grid w-full max-w-sm items-center gap-1.5">
-                  <FormLabel htmlFor="picture">Picture</FormLabel>
-                  <Input id="fileInput" type="file" multiple ref={ref} onChange={event => {
-                    if (event.target.files) {
-                      handleFileChange(event);
-                      onChange(event.target.files[0]); 
-                    }
-                  }} />
-                </div>
-              )}
-            />
-
-
-
-
-
-<UploadFiles_Configure files={files} setFiles={setFiles} />
-
-
 <FormField
-  control={form.control}
-  name="tools"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Tools</FormLabel>
-      {tools.map((tool) => (
-        <div key={tool.id} className="flex items-center justify-between py-2">
-          <span>{tool.label}</span>
-          <Switch
-  checked={field.value?.includes(tool.id)}
-  disabled={tool.id === 'function'}
-  onCheckedChange={(checked) => {
-    // Direkter Aufruf mit `tool.id`, da es bereits den korrekten Typ hat
-    handleToolChange(tool.id, checked);
-    const updatedTools = checked
-      ? [...(field.value || []), tool.id]
-      : (field.value || []).filter((value) => value !== tool.id);
-    field.onChange(updatedTools);
-  }}
-/>
+            control={form.control}
+            name="tools"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tools</FormLabel>
+                {tools.map((tool) => (
+                  <div key={tool.id} className="flex items-center justify-between py-2">
+                    <span>{tool.label}</span>
+                    <Switch
+            checked={field.value?.includes(tool.id)}
+            disabled={tool.id === 'function'}
+            onCheckedChange={(checked) => {
+              // Direkter Aufruf mit `tool.id`, da es bereits den korrekten Typ hat
+              handleToolChange(tool.id, checked);
+              const updatedTools = checked
+                ? [...(field.value || []), tool.id]
+                : (field.value || []).filter((value) => value !== tool.id);
+              field.onChange(updatedTools);
+            }}
+          />
         </div>
       ))}
     </FormItem>
   )}
 />
+
+<UploadFiles_Configure files={files} setFiles={setFiles} onFileIdUpdate={handleFileIdUpdate} />
+
+
 
 
   

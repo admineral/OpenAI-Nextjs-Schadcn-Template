@@ -17,10 +17,10 @@ interface FileData {
 interface UploadFilesProps {
   files: FileData[];
   setFiles: React.Dispatch<React.SetStateAction<FileData[]>>;
+  onFileIdUpdate: (fileId: string) => void; // Add this line
 }
 
-const UploadFiles_Configure: React.FC<UploadFilesProps> = ({ files, setFiles }) => {
-  const [statusMessage, setStatusMessage] = useState<string>('');
+const UploadFiles_Configure: React.FC<UploadFilesProps> = ({ files, setFiles, onFileIdUpdate }) => {  const [statusMessage, setStatusMessage] = useState<string>('');
 
   const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = event.target.files;
@@ -38,6 +38,7 @@ const UploadFiles_Configure: React.FC<UploadFilesProps> = ({ files, setFiles }) 
               f.name === fileData.name ? { ...f, fileId, status: 'uploaded' } : f
             )
           );
+          onFileIdUpdate(fileId); // Call onFileIdUpdate with the new fileId
         })
         .catch(error => {
           console.error('Error uploading file:', error);
