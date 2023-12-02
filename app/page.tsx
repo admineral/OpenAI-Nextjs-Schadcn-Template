@@ -1,5 +1,4 @@
 "use client"
-
 import React, { useState } from 'react';
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -71,6 +70,7 @@ export default function CreateAssistantPage() {
   const [response, setResponse] = useState<Response | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [files, setFiles] = useState<FileData[]>([]);
+  const [activeFileIds, setActiveFileIds] = useState<string[]>([]);
 
   const [assistantDetails, setAssistantDetails] = useState<AssistantDetails>({
     assistantName: '',
@@ -86,39 +86,7 @@ export default function CreateAssistantPage() {
     resolver: zodResolver(formSchema),
     defaultValues: assistantDetails,
   });
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      setIsUploading(true);
-      const filesArray = Array.from(event.target.files); 
   
-      for (const file of filesArray) {
-        const formData = new FormData();
-        formData.append('file', file);
-  
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-  
-        const uploadData = await uploadRes.json();
-  
-        // Check if the file ID is valid before adding it to the array
-        if (uploadData.fileId) {
-          setAssistantDetails(prevDetails => {
-            const newDetails = {
-              ...prevDetails,
-              fileIds: [...prevDetails.fileIds, uploadData.fileId],
-              tools: prevDetails.tools.includes('retrieval') ? prevDetails.tools : ['retrieval', ...prevDetails.tools] as ("function" | "retrieval" | "code_interpreter")[],
-            };
-            console.log('Updated assistantDetails:', newDetails);
-            return newDetails;
-          });
-        }
-      }
-      setIsUploading(false);
-    }
-  };
 
   const handleToolChange = (tool: "function" | "retrieval" | "code_interpreter", checked: boolean) => {
     setAssistantDetails(prevDetails => {
@@ -133,7 +101,10 @@ export default function CreateAssistantPage() {
     });
   };
 
-  const createAssistant = async (values: z.infer<typeof formSchema>) => {
+
+  const createAssistant = async (values: z.infer<typeof formSchema>, e: any) => {
+    e.preventDefault(); // Prevent the default form submission event
+  
     console.log('Sending request with assistantDetails:', assistantDetails);
     const res = await fetch('/api/createAssistant', {
       method: 'POST',
@@ -150,6 +121,8 @@ export default function CreateAssistantPage() {
     setResponse(data);
   };
 
+
+
   const handleFileIdUpdate = (fileId: string) => {
     setAssistantDetails(prevDetails => {
       const newDetails = {
@@ -158,8 +131,8 @@ export default function CreateAssistantPage() {
       };
       return newDetails;
     });
+    setActiveFileIds((prevFileIds) => [...prevFileIds, fileId]);
   };
-
 
   //Return the page
   return (
@@ -174,8 +147,11 @@ export default function CreateAssistantPage() {
         <h1 className="text-2xl font-bold mb-4">Create Assistant</h1>
   
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(createAssistant)} className="space-y-8">
-          <FormField
+        <form onSubmit={form.handleSubmit(createAssistant)} className="space-y-8">
+          
+          
+          
+                   <FormField
               control={form.control}
               name="assistantName"
               render={({ field }) => (
@@ -252,7 +228,7 @@ export default function CreateAssistantPage() {
   )}
 />
 
-<UploadFiles_Configure files={files} setFiles={setFiles} onFileIdUpdate={handleFileIdUpdate} />
+<UploadFiles_Configure files={files} setFiles={setFiles} onFileIdUpdate={handleFileIdUpdate} setActiveFileIds={setActiveFileIds} />
 
 
 

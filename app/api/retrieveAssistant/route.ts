@@ -23,8 +23,11 @@ export async function POST(req: NextRequest) {
     // Return the retrieved assistant details as a JSON response
     return NextResponse.json(assistantDetails);
   } catch (error) {
-    // Log any errors that occur during the process
     console.error(`Error occurred while retrieving assistant: ${error}`);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      return NextResponse.json({ error: 'An unknown error occurred' }, { status: 500 });
+    }
   }
 }

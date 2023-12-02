@@ -17,10 +17,11 @@ interface FileData {
 interface UploadFilesProps {
   files: FileData[];
   setFiles: React.Dispatch<React.SetStateAction<FileData[]>>;
-  onFileIdUpdate: (fileId: string) => void; // Add this line
+  onFileIdUpdate: (fileId: string) => void;
+  setActiveFileIds: React.Dispatch<React.SetStateAction<string[]>>; 
 }
 
-const UploadFiles_Configure: React.FC<UploadFilesProps> = ({ files, setFiles, onFileIdUpdate }) => {  const [statusMessage, setStatusMessage] = useState<string>('');
+const UploadFiles_Configure: React.FC<UploadFilesProps> = ({ files, setFiles, onFileIdUpdate, setActiveFileIds }) => {  const [statusMessage, setStatusMessage] = useState<string>('');
 
   const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = event.target.files;
@@ -60,6 +61,8 @@ const UploadFiles_Configure: React.FC<UploadFilesProps> = ({ files, setFiles, on
     deleteUploadedFile(fileId, setStatusMessage)
       .then(() => {
         setFiles(currentFiles => currentFiles.filter(f => f.fileId !== fileId));
+        setActiveFileIds((prevFileIds) => prevFileIds.filter(id => id !== fileId)); // Add this line
+
         setStatusMessage(`File deleted successfully.`);
       })
       .catch(error => {
