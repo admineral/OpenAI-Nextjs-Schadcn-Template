@@ -82,13 +82,27 @@ export const deleteFile = async (fileId: string) => {
   return jsonResponse.deleted;
 };
   
-  // Creates an assistant
-  export const createAssistant = async (assistantName: string, assistantModel: string, assistantDescription: string, fileId: string) => {
+  export const createAssistant = async (
+    assistantName: string,
+    assistantModel: string,
+    assistantDescription: string,
+    fileIds?: string[],
+    tools?: ({ toolName: string; config: any })[]
+  ) => {
     console.log('Creating assistant...');
+    const requestBody: any = {
+      assistantName,
+      assistantModel,
+      assistantDescription,
+      ...(tools ? { tools } : {}),
+    };
+    if (fileIds && fileIds.length > 0) {
+      requestBody.fileIds = fileIds;
+    }
     const response = await fetch('/api/createAssistant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assistantName, assistantModel, assistantDescription, fileId }),
+      body: JSON.stringify(requestBody),
     });
     if (!response.ok) {
       console.error('Failed to create assistant');
@@ -265,3 +279,119 @@ export async function listAssistants(options: { limit?: number, order?: string, 
     throw error;
   }
 }
+
+
+
+
+
+
+// achtung beta
+
+
+// Create and Run Thread
+export const createAndRunThread = async (assistantId: string, inputMessage: string) => {
+  console.log('Creating and running thread...');
+  const requestBody = {
+    assistantId,
+    thread: {
+      messages: [
+        {
+          role: "user",
+          content: inputMessage
+        }
+      ]
+    }
+  };
+  const response = await fetch('/api/createThreadAndRun', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(requestBody),
+  });
+  if (!response.ok) {
+    console.error('Failed to create and run thread');
+    throw new Error('Failed to create and run thread');
+  }
+  const data = await response.json();
+  console.log('Thread created and run successfully');
+  return { threadId: data.thread_id, runId: data.id };
+};
+
+// List Run Steps
+export const listRunSteps = async (threadId: string, runId: string, options: any = {}) => {
+  console.log('Listing run steps...');
+  const response = await fetch('/api/listRunSteps', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ threadId, runId, ...options }),
+  });
+
+  // Log the response status
+  console.log('Response status:', response.status);
+
+  // Try to parse the response body as JSON and log it
+  let responseBody;
+  try {
+    responseBody = await response.json();
+    console.log('Response body:', responseBody);
+  } catch (error) {
+    console.error('Failed to parse response body:', error);
+  }
+  
+  if (!response.ok) {
+    console.error('Failed to list run steps');
+    throw new Error('Failed to list run steps');
+  }
+  console.log('Run steps listed successfully');
+  return responseBody;
+};
+
+// Retrieve Run Step
+export const retrieveRunStep = async (threadId: string, runId: string, stepId: string) => {
+  console.log('Retrieving run step...');
+  const response = await fetch('/api/retrieveRunStep', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ threadId, runId, stepId }),
+  });
+  if (!response.ok) {
+    console.error('Failed to retrieve run step');
+    throw new Error('Failed to retrieve run step');
+  }
+  console.log('Run step retrieved successfully');
+  return await response.json();
+};
+
+// Submit Tool Outputs
+// app/services/api.ts
+
+// Submit Tool Outputs
+export const submitToolOutputs = async (threadId: string, runId: string, toolOutputs: { toolCallId: string, output: string }[]) => {
+  console.log('Submitting tool outputs...');
+  const response = await fetch('/api/submitToolOutputs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ threadId, runId, toolOutputs }),
+  });
+  if (!response.ok) {
+    console.error('Failed to submit tool outputs');
+    throw new Error('Failed to submit tool outputs');
+  }
+  console.log('Tool outputs submitted successfully');
+  return await response.json();
+};
+
+// Cancel a Run
+export const cancelRun = async (threadId: string, runId: string) => {
+  console.log('Cancelling run...');
+  const response = await fetch('/api/cancelRun', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ threadId, runId }),
+  });
+  if (!response.ok) {
+    console.error('Failed to cancel run');
+    throw new Error('Failed to cancel run');
+  }
+  console.log('Run cancelled successfully');
+  return await response.json();
+};

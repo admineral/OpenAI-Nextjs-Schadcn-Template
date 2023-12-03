@@ -45,7 +45,7 @@ export default function Page() {
     handleListAssistants();
   }, []);
 
-  
+
   const handleRetrieveAssistantDetails = async () => {
     if (assistantId) {
       try {
@@ -82,7 +82,7 @@ export default function Page() {
   const handleListAssistants = async () => {
     try {
       const data = await listAssistants();
-      setAssistants(data.data.slice(-5));
+      setAssistants(data.slice(-5));
     } catch (error) {
       console.error(error);
     }

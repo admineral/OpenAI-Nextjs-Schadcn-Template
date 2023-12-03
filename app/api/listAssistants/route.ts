@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
       console.log(`Retrieved assistants: ${JSON.stringify(assistants)}`);
   
       // Return the retrieved assistants as a JSON response
-      return NextResponse.json(assistants);
+      return NextResponse.json(assistants.data);
     } catch (error) {
       // Log any errors that occur during the process
       if (error instanceof Error) {
