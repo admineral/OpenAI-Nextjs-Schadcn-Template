@@ -161,23 +161,25 @@ export const deleteFile = async (fileId: string) => {
     return await response.json();
   };
   
-  // Lists messages
-  export const listMessages = async (threadId: string, runId: string) => {
+  // app/services/api.ts
+  export const listMessages = async (threadId: string) => {
     console.log('Listing messages...');
     const response = await fetch('/api/listMessages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ threadId, runId }),
+      body: JSON.stringify({ threadId }),
     });
+
     if (!response.ok) {
-      console.error(`Error fetching messages: ${response.status} ${response.statusText}`);
-      throw new Error(`Failed to list messages: ${response.status} ${response.statusText}`);
+      console.error('Error listing messages:', response.statusText);
+      throw new Error('Failed to list messages');
     }
+
     const jsonResponse = await response.json();
     console.log('Messages listed successfully');
-    return jsonResponse;
+    return jsonResponse.messages;
   };
-  
+    
   // Adds a message
   export const addMessage = async (data: any) => {
     console.log('Adding message...');

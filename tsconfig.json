@@ -23,6 +23,6 @@
       "@shadcn/ui": ["./components/ui"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/api/retrieveAssistant/route.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/api/retrieveAssistant/route.ts", "app/Function_calls/RetrieveAssistant.tsx"],
   "exclude": ["node_modules"]
 }

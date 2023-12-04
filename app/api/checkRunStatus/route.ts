@@ -35,10 +35,10 @@ export async function POST(req: NextRequest) {
     const runStatus = await openai.beta.threads.runs.retrieve(threadId, runId);
 
     // Log the retrieved run status for debugging
-    console.log(`Retrieved run status: ${runStatus.status}`);
+    console.log(`Retrieved run status:`, runStatus);
 
     // Return the retrieved run status as a JSON response
-    return NextResponse.json({ status: runStatus.status });
+    return NextResponse.json(runStatus);
   } catch (error) {
     // Log any errors that occur during the process
     console.error(`Error occurred: ${error}`);
