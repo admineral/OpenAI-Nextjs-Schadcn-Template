@@ -1,5 +1,10 @@
 // api.ts
 
+
+type Message = {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+};
 // Define the type for the response of the deleteFile function
 interface DeletionResponse {
   success: boolean;
@@ -395,5 +400,21 @@ export const cancelRun = async (threadId: string, runId: string) => {
     throw new Error('Failed to cancel run');
   }
   console.log('Run cancelled successfully');
+  return await response.json();
+};
+
+// Sends a list of messages to the chat completion API and gets the assistant's reply
+export const getChatCompletion = async (messages: Message[]) => {
+  console.log('Getting chat completion...');
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages }),
+  });
+  if (!response.ok) {
+    console.error('Error getting chat completion');
+    throw new Error('Error getting chat completion');
+  }
+  console.log('Chat completion received successfully');
   return await response.json();
 };

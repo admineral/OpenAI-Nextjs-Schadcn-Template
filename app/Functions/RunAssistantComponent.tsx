@@ -25,8 +25,9 @@ const RunAssistantComponent: React.FC<RunAssistantProps> = ({ assistantId }) => 
   } = useRunAssistantState();
   
   const [outputMessage, setOutputMessage] = useState('');
+  const [steps, setSteps] = useState([]);
 
-  const { handleCreateAndRunThread, handleSubmitToolOutputs, handleAddMessageAndRun } = useRunAssistantUtilities(
+  const { handleCreateAndRunThread, handleSubmitToolOutputs, handleAddMessageAndRun,listRunSteps, generateWeatherText  } = useRunAssistantUtilities(
     { 
       assistantId: stateAssistantId, 
       inputMessage, 
@@ -38,7 +39,8 @@ const RunAssistantComponent: React.FC<RunAssistantProps> = ({ assistantId }) => 
       toolCallId, 
       output, 
       outputMessage, 
-      stepId 
+      stepId,
+      steps
     }, 
     { 
       setAssistantId, 
@@ -50,7 +52,9 @@ const RunAssistantComponent: React.FC<RunAssistantProps> = ({ assistantId }) => 
       setRunStatus, 
       setToolCallId, 
       setOutput, 
-      setStepId 
+      setStepId,
+      setSteps,
+      setOutputMessage
     }
   );  
   
@@ -85,7 +89,21 @@ const RunAssistantComponent: React.FC<RunAssistantProps> = ({ assistantId }) => 
   }, [assistantId]);
 
 
+  useEffect(() => {
+    if ((runStatus === 'requires_action' || runStatus === 'completed') && threadId && runId) {
+      listRunSteps();
+    }
+  }, [runStatus, threadId, runId]);
 
+  useEffect(() => {
+    console.log('Steps:', steps);
+  }, [steps]);
+
+  useEffect(() => {
+    if (runStatus === 'requires_action') {
+      generateWeatherText();
+    }
+  }, [runStatus]);
 
 
  
@@ -98,19 +116,19 @@ const RunAssistantComponent: React.FC<RunAssistantProps> = ({ assistantId }) => 
           <div className="text-xs text-gray-500">{threadId}</div>
         </div>
         <div className="flex flex-col">
-        {messages.map((message, index) => (
-  <div key={index} className="mb-4">
-    <div className="flex items-center justify-between">
-      <div className="text-sm font-medium text-gray-900">{message.role}</div>
-      {runStatus === 'requires_action' && (
-        <button className="text-xs text-blue-500 hover:text-blue-600">Cancel run</button>
-      )}
-    </div>
-    {message.content.map((content, contentIndex) => (
-      <div key={contentIndex} className="mt-1 text-sm text-gray-700">{content.text.value}</div>
-    ))}
-  </div>
-))}
+          {messages.map((message, index) => (
+            <div key={index} className="mb-4">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium text-gray-900">{message.role}</div>
+                {runStatus === 'requires_action' && (
+                  <button className="text-xs text-blue-500 hover:text-blue-600">Cancel run</button>
+                )}
+              </div>
+              {message.content.map((content, contentIndex) => (
+                <div key={contentIndex} className="mt-1 text-sm text-gray-700">{content.text.value}</div>
+              ))}
+            </div>
+          ))}
         </div>
         {runStatus === 'requires_action' && (
           <form onSubmit={handleSubmitToolOutputs} className="mb-4">
@@ -141,27 +159,37 @@ const RunAssistantComponent: React.FC<RunAssistantProps> = ({ assistantId }) => 
             placeholder="Enter your message..."
             className="flex-1 p-2 border border-gray-300 rounded mr-2 text-sm"
           />
-{!threadId && (
-  <button
-    onClick={handleCreateAndRunThread}
-    className="text-xs text-blue-500 hover:text-blue-600"
-    disabled={loading}
-  >
-    {loading ? 'Loading...' : 'Add and run'}
-  </button>
-)}
-{threadId && (
-  <button
-    onClick={handleAddMessageAndRun}
-    className="text-xs text-gray-500 ml-2"
-  >
-    Add
-  </button>
-)}
+          {!threadId && (
+            <button
+              onClick={handleCreateAndRunThread}
+              className="text-xs text-blue-500 hover:text-blue-600"
+              disabled={loading}
+            >
+              {loading ? 'Loading...' : 'Add and run'}
+            </button>
+          )}
+          {threadId && (
+            <button
+              onClick={handleAddMessageAndRun}
+              className="text-xs text-gray-500 ml-2"
+            >
+              Add
+            </button>
+          )}
         </div>
         <div className="text-xs text-gray-400 mt-4">
           Playground messages can be viewed by anyone at your organization using the API.
         </div>
+        <div className="steps-window">
+        {steps.map((step, index) => (
+  <div key={index}>
+    <h3>Step {index + 1}</h3>
+    <p>ID: {step.id}</p>
+    <p>Status: {step.status}</p>
+    <p>Type: {step.type}</p>
+  </div>
+))}
+</div>
       </div>
     </div>
   );

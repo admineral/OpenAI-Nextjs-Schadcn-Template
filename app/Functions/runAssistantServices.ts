@@ -1,4 +1,4 @@
-import { createAndRunThread, listMessages, checkRunStatus, submitToolOutputs, listRunSteps, retrieveRunStep,addMessage as apiAddMessage, runAssistant as apirunAssistant } from '../services/api';
+import { getChatCompletion as apiGetChatCompletion,createAndRunThread, listMessages, checkRunStatus, submitToolOutputs, listRunSteps, retrieveRunStep,addMessage as apiAddMessage, runAssistant as apirunAssistant } from '../services/api';
 
 export const runAssistantCreateAndRunThread = async (assistantId: string, inputMessage: string) => {
   return await createAndRunThread(assistantId, inputMessage);
@@ -33,4 +33,10 @@ export const addMessage = async (data: { threadId: string, message: string }) =>
 // Run an assistant
 export const runAssistant = async (assistantId: string, threadId: string) => {
   return await apirunAssistant(assistantId, threadId);
+};
+
+
+// Get a chat completion
+export const getChatCompletion = async (messages: Array<{ role: 'user' | 'system' | 'assistant'; content: string; }>) => {
+  return await apiGetChatCompletion(messages);
 };

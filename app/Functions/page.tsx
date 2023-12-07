@@ -10,7 +10,7 @@ const Page: React.FC = () => {
 
   return (
     <div>
-              <Link href="/">
+      <Link href="/">
         <Button>Go to Other Page</Button>
       </Link>
       <h1>My Page</h1>
