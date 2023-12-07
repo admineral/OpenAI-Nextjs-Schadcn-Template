@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     // Extract thread ID, input content, and fileIds from JSON data
     const data = await req.json();
     const threadId = data.threadId;
-    const input = data.input;
+    const input = data.message;
     const fileIds = data.fileIds; // This is the new line
 
     // Log the received thread ID, input, and fileIds for debugging purposes

@@ -26,7 +26,7 @@ const RunAssistantComponent: React.FC<RunAssistantProps> = ({ assistantId }) => 
   
   const [outputMessage, setOutputMessage] = useState('');
 
-  const { handleCreateAndRunThread, handleSubmitToolOutputs } = useRunAssistantUtilities(
+  const { handleCreateAndRunThread, handleSubmitToolOutputs, handleAddMessageAndRun } = useRunAssistantUtilities(
     { 
       assistantId: stateAssistantId, 
       inputMessage, 
@@ -55,26 +55,6 @@ const RunAssistantComponent: React.FC<RunAssistantProps> = ({ assistantId }) => 
   );  
   
   
-  const handleAddMessageAndRun = async () => {
-    try {
-      // Create the data object to be sent to the addMessage function
-      const data = {
-        threadId: threadId, // replace state.threadId with threadId
-        message: inputMessage // replace state.inputMessage with inputMessage
-      };
-  
-      // Call the addMessage function
-      await Services.addMessage(data);
-  
-      // Call the runAssistant function
-      await Services.runAssistant(stateAssistantId, threadId); // replace state.assistantId with stateAssistantId and state.threadId with threadId
-  
-      // Reset the inputMessage
-      setInputMessage('');
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout | null = null;
@@ -89,7 +69,7 @@ const RunAssistantComponent: React.FC<RunAssistantProps> = ({ assistantId }) => 
             } else if (statusData.status === 'completed') {
                 clearInterval(intervalId!);
                 const messagesData = await Services.runAssistantListMessages(threadId);
-                setMessages(Array.isArray(messagesData) ? messagesData : []);
+                setMessages(Array.isArray(messagesData) ? messagesData.reverse() : []);
             }
         }, 1000);
     }
@@ -117,7 +97,7 @@ const RunAssistantComponent: React.FC<RunAssistantProps> = ({ assistantId }) => 
           <div className="text-sm font-medium text-gray-900">THREAD</div>
           <div className="text-xs text-gray-500">{threadId}</div>
         </div>
-        <div className="flex flex-col-reverse">
+        <div className="flex flex-col">
         {messages.map((message, index) => (
   <div key={index} className="mb-4">
     <div className="flex items-center justify-between">
@@ -161,19 +141,23 @@ const RunAssistantComponent: React.FC<RunAssistantProps> = ({ assistantId }) => 
             placeholder="Enter your message..."
             className="flex-1 p-2 border border-gray-300 rounded mr-2 text-sm"
           />
-          <button
-            onClick={handleCreateAndRunThread}
-            className="text-xs text-blue-500 hover:text-blue-600"
-            disabled={loading}
-          >
-            {loading ? 'Loading...' : 'Add and run'}
-          </button>
-          <button
-            onClick={handleAddMessageAndRun}
-            className="text-xs text-gray-500 ml-2"
-          >
-            Add
-          </button>
+{!threadId && (
+  <button
+    onClick={handleCreateAndRunThread}
+    className="text-xs text-blue-500 hover:text-blue-600"
+    disabled={loading}
+  >
+    {loading ? 'Loading...' : 'Add and run'}
+  </button>
+)}
+{threadId && (
+  <button
+    onClick={handleAddMessageAndRun}
+    className="text-xs text-gray-500 ml-2"
+  >
+    Add
+  </button>
+)}
         </div>
         <div className="text-xs text-gray-400 mt-4">
           Playground messages can be viewed by anyone at your organization using the API.

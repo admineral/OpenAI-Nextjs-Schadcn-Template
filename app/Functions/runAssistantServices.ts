@@ -1,4 +1,4 @@
-import { createAndRunThread, listMessages, checkRunStatus, submitToolOutputs, listRunSteps, retrieveRunStep,addMessage as apiAddMessage } from '../services/api';
+import { createAndRunThread, listMessages, checkRunStatus, submitToolOutputs, listRunSteps, retrieveRunStep,addMessage as apiAddMessage, runAssistant as apirunAssistant } from '../services/api';
 
 export const runAssistantCreateAndRunThread = async (assistantId: string, inputMessage: string) => {
   return await createAndRunThread(assistantId, inputMessage);
@@ -26,10 +26,11 @@ export const runAssistantRetrieveRunStep = async (threadId: string, runId: strin
 
 // Add a message to a thread
 export const addMessage = async (data: { threadId: string, message: string }) => {
+    console.log(typeof data.message);
     return await apiAddMessage(data);
   };
   
-  // Run an assistant
-  export const runAssistant = async (assistantId: string, threadId: string) => {
-    return await runAssistantCreateAndRunThread(assistantId, threadId);
-  };
+// Run an assistant
+export const runAssistant = async (assistantId: string, threadId: string) => {
+  return await apirunAssistant(assistantId, threadId);
+};

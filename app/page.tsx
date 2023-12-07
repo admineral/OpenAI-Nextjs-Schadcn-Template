@@ -144,9 +144,14 @@ export default function CreateAssistantPage() {
               Go to Assistants
             </button>
           </Link>
+          <Link href="/Functions">
+            <button className="mb-4 inline-block px-5 py-3 rounded-lg shadow-lg bg-blue-500 text-white text-lg font-bold">
+              Go to Function Beta
+            </button>
+          </Link>
           <Link href="/Function_calls">
             <button className="mb-4 inline-block px-5 py-3 rounded-lg shadow-lg bg-blue-500 text-white text-lg font-bold">
-              Go to Function calls
+              Go to Function Alpha
             </button>
           </Link>
       <Card className="p-5 w-1/2">

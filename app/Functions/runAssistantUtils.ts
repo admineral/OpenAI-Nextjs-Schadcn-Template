@@ -1,6 +1,7 @@
 import * as Services from './runAssistantServices';
 
 export const useRunAssistantUtilities = (state, setters) => {
+
     const handleCreateAndRunThread = async (event: React.FormEvent) => {
       event.preventDefault();
       setters.setLoading(true);
@@ -30,7 +31,7 @@ export const useRunAssistantUtilities = (state, setters) => {
           } else if (statusData.status === 'completed') {
             clearInterval(intervalId!);
             const messagesData = await Services.runAssistantListMessages(state.threadId);
-            setters.setMessages(Array.isArray(messagesData) ? messagesData : []);
+            setters.setMessages(Array.isArray(messagesData) ? messagesData.reverse() : []);
             listRunSteps(); // Add this line
           }
         }, 1000);
@@ -87,21 +88,38 @@ export const useRunAssistantUtilities = (state, setters) => {
     }
   };
   
-    // Inside useRunAssistantUtilities hook
   const handleAddMessageAndRun = async () => {
     try {
-      // Add the message
-      const messageData = await Services.addMessage({
-        threadId: state.threadId,
-        message: state.inputMessage
-      });
-
-      // Run the assistant
-      const runData = await Services.runAssistant(state.assistantId, state.threadId);
-
-      // Update the state with the new message and run data
-      setMessages(prevMessages => [...prevMessages, messageData]);
-      setRunId(runData.id);
+      const { inputMessage, threadId, assistantId } = state;
+      const { setInputMessage } = setters;
+  
+      console.log('Before creating data object - Input Message:', inputMessage);
+      console.log('Type of Input Message:', typeof inputMessage);
+  
+      // Create the data object to be sent to the addMessage function
+      const data = {
+        threadId: threadId,
+        message: String(inputMessage)
+      };
+  
+      console.log('After creating data object - Data:', data);
+      console.log('Type of Data.message:', typeof data.message);
+  
+      // Call the addMessage function
+      await Services.addMessage(data);
+      // Add user's message to messages state
+      //setters.setMessages(prevMessages => [...prevMessages, { role: 'user', content: [{ text: { value: inputMessage } }] }]);
+  
+      console.log('After addMessage call');
+  
+      // Call the runAssistant function
+      await Services.runAssistant(assistantId, threadId);
+  
+      console.log('After runAssistant call');
+  
+      // Reset the inputMessage
+      // Start checking run status
+      checkStatusInterval();
       
       setInputMessage('');
     } catch (error) {
