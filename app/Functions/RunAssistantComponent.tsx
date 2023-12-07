@@ -26,100 +26,161 @@ const RunAssistantComponent: React.FC<RunAssistantProps> = ({ assistantId }) => 
   
   const [outputMessage, setOutputMessage] = useState('');
 
+  const { handleCreateAndRunThread, handleSubmitToolOutputs } = useRunAssistantUtilities(
+    { 
+      assistantId: stateAssistantId, 
+      inputMessage, 
+      threadId, 
+      runId, 
+      messages, 
+      loading, 
+      runStatus, 
+      toolCallId, 
+      output, 
+      outputMessage, 
+      stepId 
+    }, 
+    { 
+      setAssistantId, 
+      setInputMessage, 
+      setThreadId, 
+      setRunId, 
+      setMessages, 
+      setLoading, 
+      setRunStatus, 
+      setToolCallId, 
+      setOutput, 
+      setStepId 
+    }
+  );  
+  
+  
+  const handleAddMessageAndRun = async () => {
+    try {
+      // Create the data object to be sent to the addMessage function
+      const data = {
+        threadId: threadId, // replace state.threadId with threadId
+        message: inputMessage // replace state.inputMessage with inputMessage
+      };
+  
+      // Call the addMessage function
+      await Services.addMessage(data);
+  
+      // Call the runAssistant function
+      await Services.runAssistant(stateAssistantId, threadId); // replace state.assistantId with stateAssistantId and state.threadId with threadId
+  
+      // Reset the inputMessage
+      setInputMessage('');
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
-
-  const { handleCreateAndRunThread, handleSubmitToolOutputs } = useRunAssistantUtilities({ assistantId: stateAssistantId, inputMessage, threadId, runId, messages, loading, runStatus, toolCallId, output, stepId }, { setAssistantId, setInputMessage, setThreadId, setRunId, setMessages, setLoading, setRunStatus, setToolCallId, setOutput, setStepId });
-
-    useEffect(() => {
-        let intervalId: NodeJS.Timeout | null = null;
-        if (threadId && runId && runStatus !== 'requires_action') {
+  useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+    if (threadId && runId && runStatus !== 'requires_action') {
         intervalId = setInterval(async () => {
             const statusData = await Services.runAssistantCheckRunStatus(threadId, runId);
             setRunStatus(statusData.status);
             if (statusData.status === 'requires_action') {
-            const toolCallId = statusData.required_action.submit_tool_outputs.tool_calls[0].id;
-            setToolCallId(toolCallId);
-            clearInterval(intervalId!); // Clear the interval when status is 'requires_action'
+                const toolCallId = statusData.required_action.submit_tool_outputs.tool_calls[0].id;
+                setToolCallId(toolCallId);
+                clearInterval(intervalId!); // Clear the interval when status is 'requires_action'
             } else if (statusData.status === 'completed') {
-            clearInterval(intervalId!);
-            const messagesData = await Services.runAssistantListMessages(threadId);
-            setMessages(Array.isArray(messagesData) ? messagesData : []);
+                clearInterval(intervalId!);
+                const messagesData = await Services.runAssistantListMessages(threadId);
+                setMessages(Array.isArray(messagesData) ? messagesData : []);
             }
         }, 1000);
-        }
-        return () => {
+    }
+    return () => {
         if (intervalId) {
             clearInterval(intervalId);
         }
-        };
-    }, [threadId, runId, runStatus]); 
-    useEffect(() => {
-        setAssistantId(assistantId);
-      }, [assistantId]);
+    };
+  }, [threadId, runId, runStatus]); 
+
+  useEffect(() => {
+    setAssistantId(assistantId);
+  }, [assistantId]);
 
 
 
 
-      
+
+ 
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Run Assistant</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleCreateAndRunThread} className="mb-4 flex gap-2">
-          <Input
-            value={stateAssistantId}
-            onChange={(e) => setAssistantId(e.target.value)}
-            
-            required
-          />
-          <Input
+    <div className="max-w-2xl mx-auto my-10">
+      <div className="bg-white shadow rounded-lg p-6">
+        <div className="border-b border-gray-200 mb-4">
+          <div className="text-sm font-medium text-gray-900">THREAD</div>
+          <div className="text-xs text-gray-500">{threadId}</div>
+        </div>
+        <div className="flex flex-col-reverse">
+        {messages.map((message, index) => (
+  <div key={index} className="mb-4">
+    <div className="flex items-center justify-between">
+      <div className="text-sm font-medium text-gray-900">{message.role}</div>
+      {runStatus === 'requires_action' && (
+        <button className="text-xs text-blue-500 hover:text-blue-600">Cancel run</button>
+      )}
+    </div>
+    {message.content.map((content, contentIndex) => (
+      <div key={contentIndex} className="mt-1 text-sm text-gray-700">{content.text.value}</div>
+    ))}
+  </div>
+))}
+        </div>
+        {runStatus === 'requires_action' && (
+          <form onSubmit={handleSubmitToolOutputs} className="mb-4">
+            <div className="bg-gray-50 rounded p-3">
+              <div className="flex items-center justify-between">
+                <input
+                  type="text"
+                  value={outputMessage}
+                  onChange={(e) => setOutputMessage(e.target.value)}
+                  placeholder="Enter your output message..."
+                  className="flex-1 p-2 border border-gray-300 rounded mr-2 text-sm"
+                />
+                <button
+                  type="submit"
+                  className="text-xs text-blue-500 hover:text-blue-600"
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
+        <div className="flex items-center mt-auto">
+          <input
+            type="text"
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            placeholder="Enter a message"
-            required
+            placeholder="Enter your message..."
+            className="flex-1 p-2 border border-gray-300 rounded mr-2 text-sm"
           />
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Loading...' : 'Run Assistant'}
-          </Button>
-        </form>
-
-        {runStatus === 'requires_action' && (
-  <form onSubmit={handleSubmitToolOutputs} className="mb-4 flex gap-2">
-    <Input
-      value={output}
-      onChange={(e) => setOutput(e.target.value)}
-      placeholder="Enter output"
-      required
-    />
-    <Button type="submit">
-      Submit Output
-    </Button>
-  </form>
-)}
-
-        {messages.map((message) => (
-          <Card key={message.id}>
-            <CardHeader>
-              <CardTitle>Message {message.id}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p><strong>Role:</strong> {message.role}</p>
-              {message.content.map((content, index) => 
-                content.type === 'text' ? (
-                  <p key={index}>
-                    <strong>Content:</strong> 
-                    {typeof content.text === 'string' ? content.text : `Value: ${content.text.value}, Annotations: ${content.text.annotations}`}
-                  </p>
-                ) : null
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </CardContent>
-    </Card>
+          <button
+            onClick={handleCreateAndRunThread}
+            className="text-xs text-blue-500 hover:text-blue-600"
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : 'Add and run'}
+          </button>
+          <button
+            onClick={handleAddMessageAndRun}
+            className="text-xs text-gray-500 ml-2"
+          >
+            Add
+          </button>
+        </div>
+        <div className="text-xs text-gray-400 mt-4">
+          Playground messages can be viewed by anyone at your organization using the API.
+        </div>
+      </div>
+    </div>
   );
-}
-
-export default RunAssistantComponent;
+    };
+    
+    export default RunAssistantComponent;
